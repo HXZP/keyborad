@@ -136,24 +136,62 @@ USBD_ClassTypeDef  USBD_HID =
 
 
 /*hxzp*/
-// ¼üÅÌ±¨¸æÃèÊö·û (8×Ö½Ú)
+// ä¿®å¤åŽçš„é”®ç›˜æŠ¥å‘Šæè¿°ç¬¦
 __ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[] __ALIGN_END = {
-  0x05, 0x01, 0x09, 0x06, 0xA1, 0x01, 0x05, 0x07, 0x19, 0xE0, 0x29, 0xE7,
-  0x15, 0x00, 0x25, 0x01, 0x75, 0x01, 0x95, 0x08, 0x81, 0x02, 0x95, 0x01,
-  0x75, 0x08, 0x81, 0x01, 0x95, 0x05, 0x75, 0x01, 0x05, 0x08, 0x19, 0x01,
-  0x29, 0x05, 0x91, 0x02, 0x95, 0x01, 0x75, 0x03, 0x91, 0x01, 0x95, 0x06,
-  0x75, 0x08, 0x15, 0x00, 0x25, 0x65, 0x05, 0x07, 0x19, 0x00, 0x29, 0x65,
-  0x81, 0x00, 0xC0
+  0x05, 0x01,        // Usage Page (Generic Desktop)
+  0x09, 0x06,        // Usage (Keyboard)
+  0xA1, 0x01,        // Collection (Application)
+  
+  // ä¿®é¥°é”® (Ctrl/Alt/Shiftç­‰)
+  0x05, 0x07,        //   Usage Page (Key Codes)
+  0x19, 0xE0,        //   Usage Minimum (224)
+  0x29, 0xE7,        //   Usage Maximum (231)
+  0x15, 0x00,        //   Logical Minimum (0)
+  0x25, 0x01,        //   Logical Maximum (1)
+  0x75, 0x01,        //   Report Size (1)
+  0x95, 0x08,        //   Report Count (8)
+  0x81, 0x02,        //   Input (Data,Var,Abs)
+  
+  // ä¿ç•™å­—èŠ‚
+  0x95, 0x01,        //   Report Count (1)
+  0x75, 0x08,        //   Report Size (8)
+  0x81, 0x01,        //   Input (Cnst,Arr,Abs)
+  
+  // LEDçŠ¶æ€è¾“å‡º (Caps/Num/Scroll Lock)
+  0x05, 0x08,        //   Usage Page (LEDs)
+  0x19, 0x01,        //   Usage Minimum (1)
+  0x29, 0x05,        //   Usage Maximum (5)
+  0x95, 0x05,        //   Report Count (5)
+  0x75, 0x01,        //   Report Size (1)
+  0x91, 0x02,        //   Output (Data,Var,Abs)
+  
+  // LEDå¡«å……ä½
+  0x95, 0x01,        //   Report Count (1)
+  0x75, 0x03,        //   Report Size (3)
+  0x91, 0x01,        //   Output (Cnst,Arr,Abs)
+  
+  // === å…³é”®ä¿®å¤ === //
+  // ä¸»é”®ç åŒº (æ”¯æŒå°é”®ç›˜)
+  0x95, 0x06,        //   Report Count (6)
+  0x75, 0x08,        //   Report Size (8)
+  0x15, 0x00,        //   Logical Minimum (0)
+  0x26, 0xFF, 0x00,  //   Logical Maximum (255)
+  0x05, 0x07,        //   Usage Page (Key Codes)
+  0x19, 0x00,        //   Usage Minimum (0)
+  0x29, 0xFF,        //   Usage Maximum (255)
+  0x81, 0x00,        //   Input (Data,Arr,Abs)
+  
+  0xC0               // End Collection
 };
 
-// Êó±ê±¨¸æÃèÊö·û (4×Ö½Ú)
+// ï¿½ï¿½ê±¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (4ï¿½Ö½ï¿½)
 __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[] __ALIGN_END = {
   0x05, 0x01,        // Usage Page (Generic Desktop)
   0x09, 0x02,        // Usage (Mouse)
   0xA1, 0x01,        // Collection (Application)
   0x09, 0x01,        //   Usage (Pointer)
   0xA1, 0x00,        //   Collection (Physical)
-  // °´Å¥²¿·Ö
+  // ï¿½ï¿½Å¥ï¿½ï¿½ï¿½ï¿½
   0x05, 0x09,        //     Usage Page (Button)
   0x19, 0x01,        //     Usage Minimum (1)
   0x29, 0x03,        //     Usage Maximum (3)
@@ -165,7 +203,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[] __ALIGN_END = {
   0x95, 0x01,        //     Report Count (1)
   0x75, 0x05,        //     Report Size (5)
   0x81, 0x01,        //     Input (Cnst,Arr,Abs)
-  // ÒÆ¶¯²¿·Ö
+  // ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½
   0x05, 0x01,        //     Usage Page (Generic Desktop)
   0x09, 0x30,        //     Usage (X)
   0x09, 0x31,        //     Usage (Y)
@@ -174,7 +212,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[] __ALIGN_END = {
   0x75, 0x08,        //     Report Size (8)
   0x95, 0x02,        //     Report Count (2)
   0x81, 0x06,        //     Input (Data,Var,Rel)
-  // ¹öÂÖ²¿·Ö
+  // ï¿½ï¿½ï¿½Ö²ï¿½ï¿½ï¿½
   0x09, 0x38,        //     Usage (Wheel)
   0x15, 0x81,        //     Logical Minimum (-127)
   0x25, 0x7F,        //     Logical Maximum (127)
@@ -186,21 +224,21 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[] __ALIGN_END = {
 };
 
 __ALIGN_BEGIN static uint8_t USBD_HID_CfgFSDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_END = {
-  // ÅäÖÃÃèÊö·ûÍ· (9×Ö½Ú)
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í· (9ï¿½Ö½ï¿½)
   0x09, USB_DESC_TYPE_CONFIGURATION, 0x3B, 0x00, 0x02, 0x01, 0x00, 0xE0, 0x32,
   
-  // ¼üÅÌ½Ó¿ÚÃèÊö·û (9×Ö½Ú)
+  // ï¿½ï¿½ï¿½Ì½Ó¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (9ï¿½Ö½ï¿½)
   0x09, USB_DESC_TYPE_INTERFACE, 0x00, 0x00, 0x01, 0x03, 0x01, 0x01, 0x00,
-  // HIDÃèÊö·û (9×Ö½Ú)
+  // HIDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (9ï¿½Ö½ï¿½)
   0x09, HID_DESCRIPTOR_TYPE, 0x11, 0x01, 0x00, 0x01, 0x22, sizeof(HID_KEYBOARD_ReportDesc), 0x00,
-  // ¶ËµãÃèÊö·û (7×Ö½Ú)
+  // ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (7ï¿½Ö½ï¿½)
   0x07, USB_DESC_TYPE_ENDPOINT, 0x81, 0x03, 0x08, 0x00, 0x0A,
 
-  // Êó±ê½Ó¿ÚÃèÊö·û (9×Ö½Ú)
+  // ï¿½ï¿½ï¿½Ó¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (9ï¿½Ö½ï¿½)
   0x09, USB_DESC_TYPE_INTERFACE, 0x01, 0x00, 0x01, 0x03, 0x01, 0x02, 0x00,
-  // HIDÃèÊö·û (9×Ö½Ú)
+  // HIDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (9ï¿½Ö½ï¿½)
   0x09, HID_DESCRIPTOR_TYPE, 0x11, 0x01, 0x00, 0x01, 0x22, sizeof(HID_MOUSE_ReportDesc), 0x00,
-  // ¶ËµãÃèÊö·û (7×Ö½Ú)
+  // ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (7ï¿½Ö½ï¿½)
   0x07, USB_DESC_TYPE_ENDPOINT, 0x82, 0x03, 0x04, 0x00, 0x0A
 };
 
@@ -404,11 +442,11 @@ __ALIGN_BEGIN static uint8_t USBD_HID_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
   */
 static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
-  // ³õÊ¼»¯¼üÅÌ¶Ëµã (EP1)
+  // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Ì¶Ëµï¿½ (EP1)
   USBD_LL_OpenEP(pdev, 0x81, USBD_EP_TYPE_INTR, 8);
   pdev->ep_in[0x81 & 0xFU].is_used = 1U;
   
-  // ³õÊ¼»¯Êó±ê¶Ëµã (EP2) - Ìí¼ÓÕâ²¿·Ö
+  // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Ëµï¿½ (EP2) - ï¿½ï¿½ï¿½ï¿½ï¿½â²¿ï¿½ï¿½
   USBD_LL_OpenEP(pdev, 0x82, USBD_EP_TYPE_INTR, 4);
   pdev->ep_in[0x82 & 0xFU].is_used = 1U;
 
@@ -421,7 +459,7 @@ static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   
   ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
   
-  // Ìí¼Ó½Ó¿Ú×´Ì¬³õÊ¼»¯
+  // ï¿½ï¿½ï¿½Ó½Ó¿ï¿½×´Ì¬ï¿½ï¿½Ê¼ï¿½ï¿½
   ((USBD_HID_HandleTypeDef *)pdev->pClassData)->AltSetting = 0;
   
   return USBD_OK;
@@ -436,11 +474,11 @@ static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   */
 static uint8_t USBD_HID_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
-  // ¹Ø±Õ¼üÅÌ¶Ëµã
+  // ï¿½Ø±Õ¼ï¿½ï¿½Ì¶Ëµï¿½
   USBD_LL_CloseEP(pdev, 0x81);
   pdev->ep_in[0x81 & 0xFU].is_used = 0U;
   
-  // ¹Ø±ÕÊó±ê¶Ëµã - Ìí¼ÓÕâ²¿·Ö
+  // ï¿½Ø±ï¿½ï¿½ï¿½ï¿½Ëµï¿½ - ï¿½ï¿½ï¿½ï¿½ï¿½â²¿ï¿½ï¿½
   USBD_LL_CloseEP(pdev, 0x82);
   pdev->ep_in[0x82 & 0xFU].is_used = 0U;
   
@@ -514,15 +552,15 @@ static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
         case USB_REQ_GET_DESCRIPTOR:
           if (req->wValue >> 8 == HID_REPORT_DESC)
           {
-            // ÐÞ¸ÄÎª¸ù¾Ý½Ó¿ÚºÅÑ¡ÔñÃèÊö·û
+            // ï¿½Þ¸ï¿½Îªï¿½ï¿½ï¿½Ý½Ó¿Úºï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             uint8_t interface_num = LOBYTE(req->wIndex);
             
-            if(interface_num == 0)  // ¼üÅÌ½Ó¿Ú
+            if(interface_num == 0)  // ï¿½ï¿½ï¿½Ì½Ó¿ï¿½
             {
               len = sizeof(HID_KEYBOARD_ReportDesc);
               pbuf = HID_KEYBOARD_ReportDesc;
             }
-            else if(interface_num == 1)  // Êó±ê½Ó¿Ú
+            else if(interface_num == 1)  // ï¿½ï¿½ï¿½Ó¿ï¿½
             {
               len = sizeof(HID_MOUSE_ReportDesc);
               pbuf = HID_MOUSE_ReportDesc;

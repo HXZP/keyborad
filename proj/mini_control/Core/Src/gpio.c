@@ -67,10 +67,10 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : KEY1_Pin */
-  GPIO_InitStruct.Pin = KEY1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(KEY1_GPIO_Port, &GPIO_InitStruct);
+//  GPIO_InitStruct.Pin = KEY1_Pin;
+//  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+//  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+//  HAL_GPIO_Init(KEY1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LCD_CS_Pin */
   GPIO_InitStruct.Pin = LCD_CS_Pin;
@@ -80,23 +80,23 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(LCD_CS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SD_SWITCH_Pin CCW_Pin PUSH_Pin CW_Pin */
-  GPIO_InitStruct.Pin = SD_SWITCH_Pin|CCW_Pin|PUSH_Pin|CW_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+//  GPIO_InitStruct.Pin = SD_SWITCH_Pin|CCW_Pin|PUSH_Pin|CW_Pin;
+//  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+//  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+//  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pins : W0_Pin W1_Pin W2_Pin */
-  GPIO_InitStruct.Pin = W0_Pin|W1_Pin|W2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+//  GPIO_InitStruct.Pin = W0_Pin|W1_Pin|W2_Pin;
+//  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+//  GPIO_InitStruct.Pull = GPIO_NOPULL;
+//  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+//  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pin : KEY2_Pin */
-  GPIO_InitStruct.Pin = KEY2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(KEY2_GPIO_Port, &GPIO_InitStruct);
+//  GPIO_InitStruct.Pin = KEY2_Pin;
+//  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+//  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+//  HAL_GPIO_Init(KEY2_GPIO_Port, &GPIO_InitStruct);
 
 }
 

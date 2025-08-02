@@ -56,9 +56,16 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */    
+    
+//  hxzp_Led_piece("W1","157AAAAAAAA9876543210",2,1,0,0);
+//  hxzp_Led_piece("W2","157AAAAAAAA9876543210",2,1,0,0);
+//  hxzp_Led_piece("W3","157AAAAAAAA9876543210",2,1,0,0);
+//  hxzp_Led_piece("W4","157AAAAAAAA9876543210",2,1,0,0);
+//  hxzp_Led_piece("W5","157AAAAAAAA9876543210",2,1,0,0);
+//  hxzp_Led_piece("W6","157AAAAAAAA9876543210",2,1,0,0);    
   for(;;)
   {
-    osDelay(1000);
+    osDelay(2000);
     
     // 按下A键
 //    uint8_t key_report[8] = {0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -72,12 +79,12 @@ void StartDefaultTask(void *argument)
 //    USBD_HID_SendReport(&hUsbDeviceFS, key_report, 8, 0);
     
 //	report.x = 50;  
-	  
+//	  
 //    uint8_t mouse_report[4] = {0x00, 20, 15, 0};
 //    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&report, 4, 1);    
     
 //  uint8_t mouse_report[4] = {0}; // 初始化所有字段为0
-//  
+////  
 //  // 按下左键 (设置bit0)
 //  mouse_report[0] = 0x01; // buttons: 左键按下
 //  USBD_HID_SendReport(&hUsbDeviceFS, mouse_report, 4, 1);
@@ -89,7 +96,7 @@ void StartDefaultTask(void *argument)
 //  mouse_report[0] = 0x00;
 //  USBD_HID_SendReport(&hUsbDeviceFS, mouse_report, 4, 1);	  
 	  
-	  
+
 	  
   }
   /* USER CODE END StartDefaultTask */

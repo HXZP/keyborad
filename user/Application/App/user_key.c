@@ -1,189 +1,273 @@
 #include "user_key.h"
 #include "usbd_hid.h"
 
-extern uint8_t refresh;
-HID_MOUSE_Report_t report;
-
+HID_KEYBOARD_Report_t keyboard_report = {0};
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
-/**
-  * @brief  ?????????
-  * @param  pdev: USB?��???
-  * @param  buttons: ?????
-  * @param  x: X?????
-  * @param  y: Y?????
-  * @param  wheel: ???????
-  * @retval USBD??
-  */
+static uint8_t add_keycode(uint8_t key) {
+    for(int i = 0; i < 6; i++) {
+        if(keyboard_report.keys[i] == 0) {
+            keyboard_report.keys[i] = key;
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void remove_keycode(uint8_t key) {
+    for(int i = 0; i < 6; i++) {
+        if(keyboard_report.keys[i] == key) {
+            keyboard_report.keys[i] = 0;
+            // 保持数组紧凑
+            memmove(&keyboard_report.keys[i], 
+                    &keyboard_report.keys[i+1],
+                    5 - i);
+            keyboard_report.keys[5] = 0;
+            break;
+        }
+    }
+}
+
+static void remove_keycode_all(void) {
+    for(int i = 0; i < 6; i++) {
+        keyboard_report.keys[i] = 0;
+    }
+}
+
+// 发送鼠标报告
 uint8_t USBD_HID_SendMouseReport(HID_MOUSE_Report_t *report)
 {
-  return USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)report, sizeof(report), 1);
+  // 调用USBD_HID_SendReport函数，发送鼠标报告
+  return USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)report, sizeof(HID_MOUSE_Report_t), 1);
 }
-
-
-void Key_Event_CW(uint8_t state)
+uint8_t USBD_HID_SendKeyboardReport(HID_KEYBOARD_Report_t *report)
 {
-  switch(state)
-  {
-    case KEY_IDLE:
-		report.x = 0;
-      break;
-
-    case KEY_PRESS:
-		report.x = 1;
-      hxzp_Led_piece("W0","157AAAAAAAA9876543210",2,1,0,0);
-      break;
-    
-    case KEY_DOWN:
-      break;
-
-    case KEY_DOWN_LONG:
-      break;
-
-    case KEY_DOWN_HOLD:
-      break;
-
-    case KEY_UP:
-      break;
-
-    case KEY_DOUBLE:
-      break;    
-  
-  }
+  // 调用USBD_HID_SendReport函数，发送键盘报告
+  return USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)report, sizeof(HID_KEYBOARD_Report_t), 0);
 }
 
-void Key_Event_CCW(uint8_t state)
-{
-  switch(state)
-  {
-    case KEY_IDLE:
-		report.x = 0;
-      break;
 
-    case KEY_PRESS:
-		report.x = -1;
-      hxzp_Led_piece("W2","157AAAAAAAA9876543210",2,1,0,0);
-      break;
-    
-    case KEY_DOWN:
-      break;
+/* ========== 字母键 ========== */
+#define KEY_A       0x04
+#define KEY_B       0x05
+#define KEY_C       0x06
+#define KEY_D       0x07
+#define KEY_E       0x08
+#define KEY_F       0x09
+#define KEY_G       0x0A
+#define KEY_H       0x0B
+#define KEY_I       0x0C
+#define KEY_J       0x0D
+#define KEY_K       0x0E
+#define KEY_L       0x0F
+#define KEY_M       0x10
+#define KEY_N       0x11
+#define KEY_O       0x12
+#define KEY_P       0x13
+#define KEY_Q       0x14
+#define KEY_R       0x15
+#define KEY_S       0x16
+#define KEY_T       0x17
+#define KEY_U       0x18
+#define KEY_V       0x19
+#define KEY_W       0x1A
+#define KEY_X       0x1B
+#define KEY_Y       0x1C
+#define KEY_Z       0x1D
 
-    case KEY_DOWN_LONG:
-      break;
+/* ========== 数字键（主键盘区） ========== */
+#define KEY_1       0x1E  // !
+#define KEY_2       0x1F  // @
+#define KEY_3       0x20  // #
+#define KEY_4       0x21  // $
+#define KEY_5       0x22  // %
+#define KEY_6       0x23  // ^
+#define KEY_7       0x24  // &
+#define KEY_8       0x25  // *
+#define KEY_9       0x26  // (
+#define KEY_0       0x27  // )
 
-    case KEY_DOWN_HOLD:
-      break;
+/* ========== 功能键 ========== */
+#define KEY_ENTER   0x28
+#define KEY_ESC     0x29
+#define KEY_BACKSPACE 0x2A
+#define KEY_TAB     0x2B
+#define KEY_SPACE   0x2C
+#define KEY_MINUS   0x2D  // _
+#define KEY_EQUAL   0x2E  // +
+#define KEY_LBRACE  0x2F  // {
+#define KEY_RBRACE  0x30  // }
+#define KEY_BACKSLASH 0x31  // |
+#define KEY_SEMICOLON 0x33  // :
+#define KEY_QUOTE   0x34  // "
+#define KEY_TILDE   0x35  // ~
+#define KEY_COMMA   0x36  // <
+#define KEY_PERIOD  0x37  // >
+#define KEY_SLASH   0x38  // ?
 
-    case KEY_UP:
-      break;
+/* ========== 修饰键 ========== */
+#define KEY_CAPSLOCK 0x39
+#define KEY_F1      0x3A
+#define KEY_F2      0x3B
+#define KEY_F3      0x3C
+#define KEY_F4      0x3D
+#define KEY_F5      0x3E
+#define KEY_F6      0x3F
+#define KEY_F7      0x40
+#define KEY_F8      0x41
+#define KEY_F9      0x42
+#define KEY_F10     0x43
+#define KEY_F11     0x44
+#define KEY_F12     0x45
 
-    case KEY_DOUBLE:
-      break;    
-  
-  }
+/* ========== 控制键 ========== */
+#define KEY_PRINTSCREEN 0x46
+#define KEY_SCROLLLOCK 0x47
+#define KEY_PAUSE     0x48
+#define KEY_INSERT    0x49
+#define KEY_HOME      0x4A
+#define KEY_PAGEUP    0x4B
+#define KEY_DELETE    0x4C
+#define KEY_END       0x4D
+#define KEY_PAGEDOWN  0x4E
+#define KEY_RIGHT     0x4F
+#define KEY_LEFT      0x50
+#define KEY_DOWN      0x51
+#define KEY_UP        0x52
+#define KEY_NUMLOCK   0x53
+
+/* ========== 小键盘 ========== */
+#define KEY_KP_SLASH   0x54
+#define KEY_KP_ASTERISK 0x55
+#define KEY_KP_MINUS   0x56
+#define KEY_KP_PLUS    0x57
+#define KEY_KP_ENTER   0x58
+#define KEY_KP_1       0x59
+#define KEY_KP_2       0x5A
+#define KEY_KP_3       0x5B
+#define KEY_KP_4       0x5C
+#define KEY_KP_5       0x5D
+#define KEY_KP_6       0x5E
+#define KEY_KP_7       0x5F
+#define KEY_KP_8       0x60
+#define KEY_KP_9       0x61
+#define KEY_KP_0       0x62
+#define KEY_KP_DOT     0x63
+
+/* ========== 国际键 ========== */
+#define KEY_NONUS_BACKSLASH 0x64  // \|
+#define KEY_APPLICATION 0x65  // Windows右键菜单键
+#define KEY_POWER      0x66
+#define KEY_MENU       0x76
+
+#define DEFINE_KEY_EVENT_HANDLER(key_id, key) \
+void Key_Event_##key_id(uint8_t state)       \
+{                                            \
+    switch(state)                            \
+    {                                        \
+        case KEY_IDLE:                       \
+            remove_keycode(key);             \
+            break;                           \
+                                             \
+        case KEY_PRESS:                      \
+            add_keycode(key);               \
+            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);\
+            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);\
+            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);\
+            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);\
+            hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);\
+            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);\
+            break;                          \
+    }                                        \
 }
 
-void Key_Event_PUSH(uint8_t state)
-{
-	uint8_t key_report[8] = {0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00};
-  switch(state)
-  {
-    case KEY_IDLE:
-    memset(key_report, 0, sizeof(key_report));
-    USBD_HID_SendReport(&hUsbDeviceFS, key_report, 8, 0);		
-      break;
+// 生成Key1~Key12的事件处理函数
+DEFINE_KEY_EVENT_HANDLER(1, KEY_KP_7)
+DEFINE_KEY_EVENT_HANDLER(2, KEY_KP_8)
+DEFINE_KEY_EVENT_HANDLER(3, KEY_KP_9)
+DEFINE_KEY_EVENT_HANDLER(4, KEY_KP_4)
+DEFINE_KEY_EVENT_HANDLER(5, KEY_KP_5)
+DEFINE_KEY_EVENT_HANDLER(6, KEY_KP_6)
+DEFINE_KEY_EVENT_HANDLER(7, KEY_KP_1)
+DEFINE_KEY_EVENT_HANDLER(8, KEY_KP_2)
+DEFINE_KEY_EVENT_HANDLER(9, KEY_KP_3)
+DEFINE_KEY_EVENT_HANDLER(10, KEY_KP_0)
+DEFINE_KEY_EVENT_HANDLER(11, KEY_A)
+DEFINE_KEY_EVENT_HANDLER(12, KEY_NUMLOCK)
 
-    case KEY_PRESS:
-		
-		USBD_HID_SendReport(&hUsbDeviceFS, key_report, 8, 0);		
-		hxzp_Led_piece("W0","00000000000123456789A987654321000000000000000",2,1,0,0);
-		hxzp_Led_piece("W1","123456789A98765432100000000000000000000000000",2,1,0,0);
-		hxzp_Led_piece("W2","00000000000123456789A987654321000000000000000",2,1,0,0);
-      break;
-    
-    case KEY_DOWN:
-      break;
 
-    case KEY_DOWN_LONG:
-      break;
-
-    case KEY_DOWN_HOLD:
-      break;
-
-    case KEY_UP:
-      break;
-
-    case KEY_DOUBLE:
-      break;    
-  
-  }
+void Key_Event_K1(uint8_t state)       
+{                                            
+    switch(state)                            
+    {                                        
+        case KEY_IDLE:                       
+//            remove_keycode(key);             
+            break;                           
+                                             
+        case KEY_PRESS:                      
+//            add_keycode(key);               
+            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);
+            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);
+            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);
+            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            break;                          
+    }                                        
 }
 
-void Key_Event_KEY1(uint8_t state)
-{
-  switch(state)
-  {
-    case KEY_IDLE:
-		report.buttons.left = 0;
-      break;
-
-    case KEY_PRESS:
-		report.buttons.left = 1;
-      hxzp_Led_piece("W0","0000000000000000000000123456789A9876543210000",2,1,0,0);
-      hxzp_Led_piece("W1","00000000000123456789A987654321000000000000000",2,1,0,0);
-      hxzp_Led_piece("W2","123456789A98765432100000000000000000000000000",2,1,0,0);
-      break;
-    
-    case KEY_DOWN:
-      break;
-
-    case KEY_DOWN_LONG:
-      break;
-
-    case KEY_DOWN_HOLD:
-      break;
-
-    case KEY_UP:
-      break;
-
-    case KEY_DOUBLE:
-      break;    
-  
-  }
+void Key_Event_K2(uint8_t state)       \
+{                                            
+    switch(state)                            
+    {                                        
+        case KEY_IDLE:                       
+//            remove_keycode(key);             
+            break;                           
+                                             
+        case KEY_PRESS:                      
+//            add_keycode(key);               
+            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);
+            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);
+            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);
+            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            break;                          
+    }                                        
 }
 
-void Key_Event_KEY2(uint8_t state)
-{
-  switch(state)
-  {
-    case KEY_IDLE:
-		report.buttons.right = 0;
-      break;
-
-    case KEY_PRESS:
-		report.buttons.right = 1;
-      hxzp_Led_piece("W0","123456789A98765432100000000000000000000000000",2,1,0,0);
-      hxzp_Led_piece("W1","00000000000123456789A987654321000000000000000",2,1,0,0);
-      hxzp_Led_piece("W2","0000000000000000000000123456789A9876543210000",2,1,0,0);    
-      break;
-    
-    case KEY_DOWN:
-      break;
-
-    case KEY_DOWN_LONG:
-      break;
-
-    case KEY_DOWN_HOLD:
-      break;
-
-    case KEY_UP:
-      break;
-
-    case KEY_DOUBLE:
-      break;    
-  
-  }
+void Key_Event_K3(uint8_t state)       \
+{                                            
+    switch(state)                            
+    {                                        
+        case KEY_IDLE:                       
+//            remove_keycode(key);             
+            break;                           
+                                             
+        case KEY_PRESS:                      
+//            add_keycode(key);               
+            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);
+            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);
+            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);
+            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            break;                          
+    }                                        
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 osThreadId_t keyboradTaskHandle;
 const osThreadAttr_t keyboradTask_attributes = {
@@ -192,26 +276,56 @@ const osThreadAttr_t keyboradTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
+uint8_t num_init = 0;
 void StartkeyboradTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */    
   for(;;)
   {
-    USBD_HID_SendMouseReport(&report);
-    osDelay(50);
+    if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
+
+        if(num_init == 0)   
+        {
+            hxzp_Led_piece("W1","157AAAAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W2","157AAAAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W3","157AAAAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W4","157AAAAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W5","157AAAAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W6","157AAAAAAAA9876543210",2,1,0,0);             
+            num_init = 1;   
+        }
+    } 
+    else 
+    {
+        num_init = 0;
+    }      
+      
+    USBD_HID_SendKeyboardReport(&keyboard_report);
+    osDelay(5);
   }
   /* USER CODE END StartDefaultTask */
 }
 
 void User_Key_Init(void)
 {
-  hxzp_Key_eventReg("CW",Key_Event_CW);
-  hxzp_Key_eventReg("CCW",Key_Event_CCW);
-  hxzp_Key_eventReg("PUSH",Key_Event_PUSH);
-  hxzp_Key_eventReg("KEY1",Key_Event_KEY1);
-  hxzp_Key_eventReg("KEY2",Key_Event_KEY2);  
-  
-  keyboradTaskHandle = osThreadNew(StartkeyboradTask, NULL, &keyboradTask_attributes);
+    hxzp_Key_eventReg("Key1", Key_Event_1);
+    hxzp_Key_eventReg("Key2", Key_Event_2);
+    hxzp_Key_eventReg("Key3", Key_Event_3);
+    hxzp_Key_eventReg("Key4", Key_Event_4);
+    hxzp_Key_eventReg("Key5", Key_Event_5);
+    hxzp_Key_eventReg("Key6", Key_Event_6);
+    hxzp_Key_eventReg("Key7", Key_Event_7);
+    hxzp_Key_eventReg("Key8", Key_Event_8);
+    hxzp_Key_eventReg("Key9", Key_Event_9);
+    hxzp_Key_eventReg("Key10", Key_Event_10);
+    hxzp_Key_eventReg("Key11", Key_Event_11);
+    hxzp_Key_eventReg("Key12", Key_Event_12);
+
+    hxzp_Key_eventReg("K1", Key_Event_K1);
+    hxzp_Key_eventReg("K2", Key_Event_K2);
+    hxzp_Key_eventReg("K3", Key_Event_K3);
+    
+    keyboradTaskHandle = osThreadNew(StartkeyboradTask, NULL, &keyboradTask_attributes);
 }
 
 
