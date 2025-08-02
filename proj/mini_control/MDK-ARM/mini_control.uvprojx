@@ -2039,6 +2039,11 @@
                 </FileArmAds>
               </FileOption>
             </File>
+            <File>
+              <FileName>drv_decoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\user\Application\Drv\drv_decoder.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

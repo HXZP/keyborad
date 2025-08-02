@@ -1,52 +1,16 @@
 #include "user_key.h"
 #include "usbd_hid.h"
+#include "drv_decoder.h"
 
-HID_KEYBOARD_Report_t keyboard_report = {0};
-extern USBD_HandleTypeDef hUsbDeviceFS;
-
-static uint8_t add_keycode(uint8_t key) {
-    for(int i = 0; i < 6; i++) {
-        if(keyboard_report.keys[i] == 0) {
-            keyboard_report.keys[i] = key;
-            return 0;
-        }
-    }
-    return 1;
-}
-
-static void remove_keycode(uint8_t key) {
-    for(int i = 0; i < 6; i++) {
-        if(keyboard_report.keys[i] == key) {
-            keyboard_report.keys[i] = 0;
-            // 保持数组紧凑
-            memmove(&keyboard_report.keys[i], 
-                    &keyboard_report.keys[i+1],
-                    5 - i);
-            keyboard_report.keys[5] = 0;
-            break;
-        }
-    }
-}
-
-static void remove_keycode_all(void) {
-    for(int i = 0; i < 6; i++) {
-        keyboard_report.keys[i] = 0;
-    }
-}
-
-// 发送鼠标报告
-uint8_t USBD_HID_SendMouseReport(HID_MOUSE_Report_t *report)
-{
-  // 调用USBD_HID_SendReport函数，发送鼠标报告
-  return USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)report, sizeof(HID_MOUSE_Report_t), 1);
-}
-uint8_t USBD_HID_SendKeyboardReport(HID_KEYBOARD_Report_t *report)
-{
-  // 调用USBD_HID_SendReport函数，发送键盘报告
-  return USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)report, sizeof(HID_KEYBOARD_Report_t), 0);
-}
-
-
+/* 修饰键状态字节（bitmask）*/
+#define KEY_MOD_LCTRL     (1 << 0)   // 0x01 : 左Ctrl
+#define KEY_MOD_LSHIFT    (1 << 1)   // 0x02 : 左Shift
+#define KEY_MOD_LALT      (1 << 2)   // 0x04 : 左Alt (Option on Mac)
+#define KEY_MOD_LGUI      (1 << 3)   // 0x08 : 左Win/Command (Windows键或Mac Command键)
+#define KEY_MOD_RCTRL     (1 << 4)   // 0x10 : 右Ctrl
+#define KEY_MOD_RSHIFT    (1 << 5)   // 0x20 : 右Shift
+#define KEY_MOD_RALT      (1 << 6)   // 0x40 : 右Alt (AltGr或Option on Mac)
+#define KEY_MOD_RGUI      (1 << 7)   // 0x80 : 右Win/Command
 /* ========== 字母键 ========== */
 #define KEY_A       0x04
 #define KEY_B       0x05
@@ -160,6 +124,74 @@ uint8_t USBD_HID_SendKeyboardReport(HID_KEYBOARD_Report_t *report)
 #define KEY_POWER      0x66
 #define KEY_MENU       0x76
 
+
+HID_KEYBOARD_Report_t keyboard_report = {0};
+extern USBD_HandleTypeDef hUsbDeviceFS;
+
+static uint8_t add_keycode(uint8_t key) {
+    for(int i = 0; i < 6; i++) {
+        if(keyboard_report.keys[i] == 0) {
+            keyboard_report.keys[i] = key;
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void remove_keycode(uint8_t key) {
+    for(int i = 0; i < 6; i++) {
+        if(keyboard_report.keys[i] == key) {
+            keyboard_report.keys[i] = 0;
+            // 保持数组紧凑
+            memmove(&keyboard_report.keys[i], 
+                    &keyboard_report.keys[i+1],
+                    5 - i);
+            keyboard_report.keys[5] = 0;
+            break;
+        }
+    }
+}
+
+static void remove_keycode_all(void) {
+    for(int i = 0; i < 6; i++) {
+        keyboard_report.keys[i] = 0;
+    }
+}
+
+static uint8_t ctrl_ref_cnt;
+static uint8_t add_keyctrl(uint8_t key) {
+    
+    ctrl_ref_cnt++;
+    remove_keycode_all();
+    keyboard_report.modifiers = KEY_MOD_LCTRL;  // 按下左Ctrl
+    keyboard_report.keys[0] = key; 
+    return 0;
+}
+
+static uint8_t remove_keyctrl(uint8_t key) {
+    
+    ctrl_ref_cnt--;
+    remove_keycode_all();
+    
+    keyboard_report.modifiers = 0;  // 按下左Ctrl
+    
+    keyboard_report.keys[0] = 0; 
+    return 0;
+}
+
+// 发送鼠标报告
+uint8_t USBD_HID_SendMouseReport(HID_MOUSE_Report_t *report)
+{
+  // 调用USBD_HID_SendReport函数，发送鼠标报告
+  return USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)report, sizeof(HID_MOUSE_Report_t), 1);
+}
+uint8_t USBD_HID_SendKeyboardReport(HID_KEYBOARD_Report_t *report)
+{
+  // 调用USBD_HID_SendReport函数，发送键盘报告
+  return USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)report, sizeof(HID_KEYBOARD_Report_t), 0);
+}
+
+
 #define DEFINE_KEY_EVENT_HANDLER(key_id, key) \
 void Key_Event_##key_id(uint8_t state)       \
 {                                            \
@@ -206,12 +238,12 @@ void Key_Event_K1(uint8_t state)
                                              
         case KEY_PRESS:                      
 //            add_keycode(key);               
-            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);
-            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);
-            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);
-            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W6","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W5","0000157AAAAAA98765432100000000000000000",2,1,0,0);
+            hxzp_Led_piece("W4","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            hxzp_Led_piece("W3","157AAAAAA987654321000000000000000000000",2,1,0,0);
             hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);
-            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            hxzp_Led_piece("W1","00000000157AAAAAA9876543210000000000000",2,1,0,0);
             break;                          
     }                                        
 }
@@ -226,12 +258,12 @@ void Key_Event_K2(uint8_t state)       \
                                              
         case KEY_PRESS:                      
 //            add_keycode(key);               
-            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);
-            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);
-            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);
-            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W6","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W5","0000157AAAAAA98765432100000000000000000",2,1,0,0);
+            hxzp_Led_piece("W4","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            hxzp_Led_piece("W3","157AAAAAA987654321000000000000000000000",2,1,0,0);
             hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);
-            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            hxzp_Led_piece("W1","00000000157AAAAAA9876543210000000000000",2,1,0,0);
             break;                          
     }                                        
 }
@@ -246,28 +278,92 @@ void Key_Event_K3(uint8_t state)       \
                                              
         case KEY_PRESS:                      
 //            add_keycode(key);               
-            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);
-            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);
-            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);
-            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W6","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W5","0000157AAAAAA98765432100000000000000000",2,1,0,0);
+            hxzp_Led_piece("W4","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            hxzp_Led_piece("W3","157AAAAAA987654321000000000000000000000",2,1,0,0);
             hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);
-            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            hxzp_Led_piece("W1","00000000157AAAAAA9876543210000000000000",2,1,0,0);
             break;                          
     }                                        
+}
+
+int32_t last_decoder_cnt[3] = {0};
+uint8_t last_decoder_dir[3] = {0};
+
+
+void User_Decoder_Poll(void)
+{
+    if(Encoder_GetDirection(0) == ENCODER_DIR_CW)
+    {
+        if(last_decoder_cnt[0] != Encoder_GetCounter(0))
+            hxzp_Led_piece("W6","A0A0",1,1,0,0);
+        
+//        remove_keycode_all();
+//        add_keycode(KEY_BACKSPACE);            
+    }
+    else if(Encoder_GetDirection(0) == ENCODER_DIR_CCW)
+    {
+        if(last_decoder_cnt[0] != Encoder_GetCounter(0))
+            hxzp_Led_piece("W5","A0A0",1,1,0,0);
+        
+//        add_keyctrl(KEY_Z);
+    }
+    else
+    {
+//        if(last_decoder_dir[0] != ENCODER_DIR_NONE)
+//        {
+//            remove_keycode_all();
+//        }
+    }
+    last_decoder_dir[0] = Encoder_GetDirection(0);
+    last_decoder_cnt[0] = Encoder_GetCounter(0);
+
+    
+    if(Encoder_GetDirection(1) == ENCODER_DIR_CW)
+    {
+        if(last_decoder_cnt[1] != Encoder_GetCounter(1))
+            hxzp_Led_piece("W4","A0A0",1,1,0,0);          
+    }
+    else if(Encoder_GetDirection(1) == ENCODER_DIR_CCW)
+    {
+        if(last_decoder_cnt[1] != Encoder_GetCounter(1))
+            hxzp_Led_piece("W3","A0A0",1,1,0,0);
+    }
+    else
+    {
+
+    }
+    last_decoder_dir[1] = Encoder_GetDirection(1);
+    last_decoder_cnt[1] = Encoder_GetCounter(1);
+    
+    if(Encoder_GetDirection(2) == ENCODER_DIR_CW)
+    {
+        if(last_decoder_cnt[2] != Encoder_GetCounter(2))
+            hxzp_Led_piece("W2","A0A0",1,1,0,0);          
+    }
+    else if(Encoder_GetDirection(2) == ENCODER_DIR_CCW)
+    {
+        if(last_decoder_cnt[2] != Encoder_GetCounter(2))
+            hxzp_Led_piece("W1","A0A0",1,1,0,0);
+    }
+    else
+    {
+
+    }
+    last_decoder_dir[2] = Encoder_GetDirection(2);
+    last_decoder_cnt[2] = Encoder_GetCounter(2);    
 }
 
 
 
 
-
-
-
-
-
-
-
-
-
+osThreadId_t endoerTaskHandle;
+const osThreadAttr_t endoerTask_attributes = {
+  .name = "endoerTask",
+  .stack_size = 128 * 1,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 
 osThreadId_t keyboradTaskHandle;
 const osThreadAttr_t keyboradTask_attributes = {
@@ -282,8 +378,8 @@ void StartkeyboradTask(void *argument)
   /* USER CODE BEGIN StartDefaultTask */    
   for(;;)
   {
-    if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
-
+    if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) 
+    {
         if(num_init == 0)   
         {
             hxzp_Led_piece("W1","157AAAAAAAA9876543210",2,1,0,0);
@@ -294,18 +390,37 @@ void StartkeyboradTask(void *argument)
             hxzp_Led_piece("W6","157AAAAAAAA9876543210",2,1,0,0);             
             num_init = 1;   
         }
+        USBD_HID_SendKeyboardReport(&keyboard_report);
     } 
     else 
     {
         num_init = 0;
-    }      
-      
-    USBD_HID_SendKeyboardReport(&keyboard_report);
-    osDelay(5);
+        Encoder_ResetCounterAll();
+    }
+    
+    osDelay(10);
   }
   /* USER CODE END StartDefaultTask */
 }
-
+void StartendoerTask(void *argument)
+{
+  /* USER CODE BEGIN StartDefaultTask */    
+  for(;;)
+  {
+    if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) 
+    {
+        Encoder_PollAll();
+        User_Decoder_Poll();
+    } 
+    else 
+    {
+        Encoder_ResetCounterAll();
+    }
+    
+    osDelay(1);
+  }
+  /* USER CODE END StartDefaultTask */
+}
 void User_Key_Init(void)
 {
     hxzp_Key_eventReg("Key1", Key_Event_1);
@@ -326,6 +441,7 @@ void User_Key_Init(void)
     hxzp_Key_eventReg("K3", Key_Event_K3);
     
     keyboradTaskHandle = osThreadNew(StartkeyboradTask, NULL, &keyboradTask_attributes);
+    keyboradTaskHandle = osThreadNew(StartendoerTask, NULL, &endoerTask_attributes);
 }
 
 
