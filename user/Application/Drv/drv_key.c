@@ -81,7 +81,7 @@ Key_Config key_config_default =
   .debouncing_Time = 5,
   
   .down_Time = 1,
-  .downlong_Time = 30,
+  .downlong_Time = 5,
   .downhold_Time = 50,
   .double_Time = 10, 
 
@@ -150,7 +150,7 @@ uint8_t Key_Read_GPIO12(void)
 
 uint8_t Key_Read_GPIOK1(void) 
 {
-  return !HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15);
+  return !HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_2);
 }
 
 uint8_t Key_Read_GPIOK2(void) 
@@ -160,7 +160,7 @@ uint8_t Key_Read_GPIOK2(void)
 
 uint8_t Key_Read_GPIOK3(void) 
 {
-  return !HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_2);
+  return !HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15);
 }
 
 

@@ -128,9 +128,9 @@ void Encoder_Poll(uint8_t enc_index)
     // 检测方向变化
     EncoderDirection new_dir = ENCODER_DIR_NONE;
     if (change > 0) {
-        new_dir = ENCODER_DIR_CW;
-    } else if (change < 0) {
         new_dir = ENCODER_DIR_CCW;
+    } else if (change < 0) {
+        new_dir = ENCODER_DIR_CW;
     }
     
     // 如果有方向变化

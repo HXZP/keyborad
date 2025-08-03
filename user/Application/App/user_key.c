@@ -124,11 +124,16 @@
 #define KEY_POWER      0x66
 #define KEY_MENU       0x76
 
-
+uint8_t keyboard_lock = 0;
 HID_KEYBOARD_Report_t keyboard_report = {0};
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 static uint8_t add_keycode(uint8_t key) {
+
+    if(keyboard_lock) { // 锁定状态，不处理
+        return 1;
+    }
+    
     for(int i = 0; i < 6; i++) {
         if(keyboard_report.keys[i] == 0) {
             keyboard_report.keys[i] = key;
@@ -139,6 +144,11 @@ static uint8_t add_keycode(uint8_t key) {
 }
 
 static void remove_keycode(uint8_t key) {
+
+    if(keyboard_lock) { // 锁定状态，不处理
+        return;
+    }
+    
     for(int i = 0; i < 6; i++) {
         if(keyboard_report.keys[i] == key) {
             keyboard_report.keys[i] = 0;
@@ -153,31 +163,53 @@ static void remove_keycode(uint8_t key) {
 }
 
 static void remove_keycode_all(void) {
-    for(int i = 0; i < 6; i++) {
-        keyboard_report.keys[i] = 0;
-    }
+
+    keyboard_lock = 0;
+    memset(&keyboard_report, 0 ,sizeof(keyboard_report));
 }
 
 static uint8_t ctrl_ref_cnt;
-static uint8_t add_keyctrl(uint8_t key) {
+static uint8_t add_keymodifiers(uint8_t modifiers, uint8_t key) {
     
+    if(keyboard_lock) { // 锁定状态，不处理
+        return 1;
+    }
+    
+    keyboard_lock = 1;
+
     ctrl_ref_cnt++;
-    remove_keycode_all();
-    keyboard_report.modifiers = KEY_MOD_LCTRL;  // 按下左Ctrl
-    keyboard_report.keys[0] = key; 
-    return 0;
+    memset(&keyboard_report, 0 ,sizeof(keyboard_report));
+    keyboard_report.modifiers = modifiers;  // 按下左Ctrl
+    for(int i = 0; i < 6; i++) {
+        if(keyboard_report.keys[i] == 0) {
+            keyboard_report.keys[i] = key;
+            return 0;
+        }
+    }
+    return 1;
 }
 
-static uint8_t remove_keyctrl(uint8_t key) {
+// static uint8_t remove_keymodifiers(uint8_t modifiers, uint8_t key) {
     
-    ctrl_ref_cnt--;
-    remove_keycode_all();
-    
-    keyboard_report.modifiers = 0;  // 按下左Ctrl
-    
-    keyboard_report.keys[0] = 0; 
-    return 0;
-}
+//     ctrl_ref_cnt--;
+//     memset(&keyboard_report, 0 ,sizeof(keyboard_report));
+//     keyboard_report.modifiers = modifiers;  // 按下左Ctrl
+//     for(int i = 0; i < 6; i++) {
+//         if(keyboard_report.keys[i] == key) {
+//             keyboard_report.keys[i] = 0;
+//             // 保持数组紧凑
+//             memmove(&keyboard_report.keys[i], 
+//                     &keyboard_report.keys[i+1],
+//                     5 - i);
+//             keyboard_report.keys[5] = 0;
+//             break;
+//         }
+//     }
+//     return 0;
+// }
+
+
+
 
 // 发送鼠标报告
 uint8_t USBD_HID_SendMouseReport(HID_MOUSE_Report_t *report)
@@ -224,20 +256,51 @@ DEFINE_KEY_EVENT_HANDLER(7, KEY_KP_1)
 DEFINE_KEY_EVENT_HANDLER(8, KEY_KP_2)
 DEFINE_KEY_EVENT_HANDLER(9, KEY_KP_3)
 DEFINE_KEY_EVENT_HANDLER(10, KEY_KP_0)
-DEFINE_KEY_EVENT_HANDLER(11, KEY_A)
+// DEFINE_KEY_EVENT_HANDLER(11, KEY_A)
 DEFINE_KEY_EVENT_HANDLER(12, KEY_NUMLOCK)
 
+void Key_Event_11(uint8_t state)       
+{                                            
+    switch(state)                            
+    {                                        
+        case KEY_IDLE:                       
+            remove_keycode_all();        
+            break;                           
+
+        case KEY_DOWN_LONG:                      
+            add_keycode(KEY_KP_SLASH);
+            add_keycode(KEY_KP_ASTERISK);
+            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);
+            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);
+            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);
+            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);
+            break;     
+            
+        case KEY_DOUBLE:
+            add_keycode(KEY_KP_ASTERISK);
+            add_keycode(KEY_KP_SLASH);
+            hxzp_Led_piece("W6","00000000000000000000157AAAAAA9876543210",2,1,0,0);
+            hxzp_Led_piece("W5","0000000000000000157AAAAAA98765432100000",2,1,0,0);
+            hxzp_Led_piece("W4","000000000000157AAAAAA987654321000000000",2,1,0,0);
+            hxzp_Led_piece("W3","00000000157AAAAAA9876543210000000000000",2,1,0,0);
+            hxzp_Led_piece("W2","0000157AAAAAA98765432100000000000000000",2,1,0,0);
+            hxzp_Led_piece("W1","157AAAAAA987654321000000000000000000000",2,1,0,0);
+        break;
+    }                                        
+}
 
 void Key_Event_K1(uint8_t state)       
 {                                            
     switch(state)                            
     {                                        
         case KEY_IDLE:                       
-//            remove_keycode(key);             
+            remove_keycode_all();               
             break;                           
                                              
         case KEY_PRESS:                      
-//            add_keycode(key);               
+            add_keymodifiers(KEY_MOD_LCTRL,KEY_V);               
             hxzp_Led_piece("W6","00000000157AAAAAA9876543210000000000000",2,1,0,0);
             hxzp_Led_piece("W5","0000157AAAAAA98765432100000000000000000",2,1,0,0);
             hxzp_Led_piece("W4","157AAAAAA987654321000000000000000000000",2,1,0,0);
@@ -252,12 +315,13 @@ void Key_Event_K2(uint8_t state)       \
 {                                            
     switch(state)                            
     {                                        
-        case KEY_IDLE:                       
-//            remove_keycode(key);             
+        case KEY_IDLE:    
+            remove_keycode_all();               
             break;                           
                                              
-        case KEY_PRESS:                      
-//            add_keycode(key);               
+        case KEY_PRESS:    
+            remove_keycode_all(); 
+            add_keycode(KEY_F7);                
             hxzp_Led_piece("W6","00000000157AAAAAA9876543210000000000000",2,1,0,0);
             hxzp_Led_piece("W5","0000157AAAAAA98765432100000000000000000",2,1,0,0);
             hxzp_Led_piece("W4","157AAAAAA987654321000000000000000000000",2,1,0,0);
@@ -268,16 +332,17 @@ void Key_Event_K2(uint8_t state)       \
     }                                        
 }
 
-void Key_Event_K3(uint8_t state)       \
+void Key_Event_K3(uint8_t state)       
 {                                            
     switch(state)                            
     {                                        
-        case KEY_IDLE:                       
-//            remove_keycode(key);             
+        case KEY_IDLE:     
+            remove_keycode_all();               
             break;                           
                                              
-        case KEY_PRESS:                      
-//            add_keycode(key);               
+        case KEY_PRESS:    
+            remove_keycode_all(); 
+            add_keycode(KEY_F8);               
             hxzp_Led_piece("W6","00000000157AAAAAA9876543210000000000000",2,1,0,0);
             hxzp_Led_piece("W5","0000157AAAAAA98765432100000000000000000",2,1,0,0);
             hxzp_Led_piece("W4","157AAAAAA987654321000000000000000000000",2,1,0,0);
@@ -290,66 +355,81 @@ void Key_Event_K3(uint8_t state)       \
 
 int32_t last_decoder_cnt[3] = {0};
 uint8_t last_decoder_dir[3] = {0};
-
-
 void User_Decoder_Poll(void)
 {
+    /*编码器1*/
     if(Encoder_GetDirection(0) == ENCODER_DIR_CW)
     {
         if(last_decoder_cnt[0] != Encoder_GetCounter(0))
             hxzp_Led_piece("W6","A0A0",1,1,0,0);
-        
-//        remove_keycode_all();
-//        add_keycode(KEY_BACKSPACE);            
+
+        remove_keycode_all();
+        add_keycode(KEY_TAB);   
     }
     else if(Encoder_GetDirection(0) == ENCODER_DIR_CCW)
     {
         if(last_decoder_cnt[0] != Encoder_GetCounter(0))
             hxzp_Led_piece("W5","A0A0",1,1,0,0);
         
-//        add_keyctrl(KEY_Z);
+        remove_keycode_all();
+        add_keycode(KEY_BACKSPACE);    
     }
     else
     {
-//        if(last_decoder_dir[0] != ENCODER_DIR_NONE)
-//        {
-//            remove_keycode_all();
-//        }
+        if(last_decoder_dir[0] != Encoder_GetDirection(0))
+        {
+            remove_keycode_all();
+        }
     }
     last_decoder_dir[0] = Encoder_GetDirection(0);
     last_decoder_cnt[0] = Encoder_GetCounter(0);
 
-    
+    /*编码器2*/
     if(Encoder_GetDirection(1) == ENCODER_DIR_CW)
     {
         if(last_decoder_cnt[1] != Encoder_GetCounter(1))
-            hxzp_Led_piece("W4","A0A0",1,1,0,0);          
+            hxzp_Led_piece("W4","A0A0",1,1,0,0);     
+        
+        add_keymodifiers(KEY_MOD_LCTRL,KEY_Y);
     }
     else if(Encoder_GetDirection(1) == ENCODER_DIR_CCW)
     {
         if(last_decoder_cnt[1] != Encoder_GetCounter(1))
             hxzp_Led_piece("W3","A0A0",1,1,0,0);
+        
+        add_keymodifiers(KEY_MOD_LCTRL,KEY_Z);    
     }
     else
     {
-
+        if(last_decoder_dir[1] != Encoder_GetDirection(1))
+        {
+            remove_keycode_all();
+        }
     }
     last_decoder_dir[1] = Encoder_GetDirection(1);
     last_decoder_cnt[1] = Encoder_GetCounter(1);
     
+    /*编码器3*/
     if(Encoder_GetDirection(2) == ENCODER_DIR_CW)
     {
         if(last_decoder_cnt[2] != Encoder_GetCounter(2))
-            hxzp_Led_piece("W2","A0A0",1,1,0,0);          
+            hxzp_Led_piece("W2","A0A0",1,1,0,0);        
+            
+        add_keymodifiers(KEY_MOD_LCTRL,KEY_X);
     }
     else if(Encoder_GetDirection(2) == ENCODER_DIR_CCW)
     {
         if(last_decoder_cnt[2] != Encoder_GetCounter(2))
             hxzp_Led_piece("W1","A0A0",1,1,0,0);
+
+        add_keymodifiers(KEY_MOD_LCTRL,KEY_C);    
     }
     else
     {
-
+        if(last_decoder_dir[2] != Encoder_GetDirection(2))
+        {
+            remove_keycode_all();
+        }
     }
     last_decoder_dir[2] = Encoder_GetDirection(2);
     last_decoder_cnt[2] = Encoder_GetCounter(2);    
