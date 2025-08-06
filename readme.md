@@ -1,55 +1,13 @@
-# 已解决问题
+# 星火-12%配列小键盘
 
-## 烧录调试
+<img src="F:\Aproject\miniboard\mini_ctrl\doc\7.readme\pictrue\028b9a026d16685f6c7804281db934b0.jpg" alt="028b9a026d16685f6c7804281db934b0" style="zoom:50%;" />
 
-芯片无法识别问题，无法烧录
+# 为什么做这个？
 
-原因：swd的22R电阻未焊接，boot0上拉电阻未连接导致悬空
+​	一开始是看上了这个键盘，但是这个价格还是很难接受，自己加旋钮和键帽可能就到了200RMB，所以想了一下还是决定自己做，还有一个理由是因为看上上图那个红色旋钮，这三个旋钮加起来要35RMB
 
-## 按键调试
+![image-20250806234101749](F:\Aproject\miniboard\mini_ctrl\doc\7.readme\pictrue\image-20250806234101749.png)
 
-波轮按钮不知名原因cw方向和VCC导通导致电平无法变化，更换pcb后正常
+# 是否支持vial？固件是否支持ota？
 
-普通按钮一直处于导通状态，原因是按钮四个引脚，有两个引脚是从前方金属外壳导出，选型问题
-
-## LCD调试
-
-屏幕按照手册协议通信后花屏
-
-原因：协议理解问题，设置区域后要发送颜色，颜色才是实际数据，设置区域只是选择更新范围
-
-##  cubemx生成错误
-
-1、更换Middlewares\Third_Party\FreeRTOS\Source\portable\RVDS中的ARM_CM3为副本
-
- 2、sd卡相关：Middlewares\Third_Party\FatFs\src\option中syscall.c更改
-
-# 进度
-
-烧录
-
-freertos
-
-led
-
-按键
-
-lcd刷屏
-
-sd卡+fatfs
-
-usb串口
-
-# TODO
-
-串口系统
-
-lcd字符显示
-
-sd卡数据文件系统设计
-
-usb通信以及切换hid功能
-
-tof
-
-imu焊接
+​	固件是自己手撸的，还有编码器懒得写了，让ai给我写，结果是调试了半天……还没自己写的快，不支持ota的，改按键要自己改代码，也没什么可视化的哈
