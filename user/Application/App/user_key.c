@@ -291,6 +291,7 @@ void Key_Event_11(uint8_t state)
     }                                        
 }
 
+//编码器1
 void Key_Event_K1(uint8_t state)       
 {                                            
     switch(state)                            
@@ -300,7 +301,8 @@ void Key_Event_K1(uint8_t state)
             break;                           
                                              
         case KEY_PRESS:                      
-            add_keymodifiers(KEY_MOD_LCTRL,KEY_V);               
+            
+            add_keymodifiers(KEY_MOD_LCTRL,KEY_X);                       
             hxzp_Led_piece("W6","00000000157AAAAAA9876543210000000000000",2,1,0,0);
             hxzp_Led_piece("W5","0000157AAAAAA98765432100000000000000000",2,1,0,0);
             hxzp_Led_piece("W4","157AAAAAA987654321000000000000000000000",2,1,0,0);
@@ -311,6 +313,7 @@ void Key_Event_K1(uint8_t state)
     }                                        
 }
 
+//编码器2
 void Key_Event_K2(uint8_t state)       \
 {                                            
     switch(state)                            
@@ -357,7 +360,7 @@ int32_t last_decoder_cnt[3] = {0};
 uint8_t last_decoder_dir[3] = {0};
 void User_Decoder_Poll(void)
 {
-    /*编码器1*/
+    /*编码器3*/
     if(Encoder_GetDirection(0) == ENCODER_DIR_CW)
     {
         if(last_decoder_cnt[0] != Encoder_GetCounter(0))
@@ -409,13 +412,13 @@ void User_Decoder_Poll(void)
     last_decoder_dir[1] = Encoder_GetDirection(1);
     last_decoder_cnt[1] = Encoder_GetCounter(1);
     
-    /*编码器3*/
+    /*编码器1*/
     if(Encoder_GetDirection(2) == ENCODER_DIR_CW)
     {
         if(last_decoder_cnt[2] != Encoder_GetCounter(2))
             hxzp_Led_piece("W2","A0A0",1,1,0,0);        
-            
-        add_keymodifiers(KEY_MOD_LCTRL,KEY_X);
+
+        add_keymodifiers(KEY_MOD_LCTRL,KEY_V);    
     }
     else if(Encoder_GetDirection(2) == ENCODER_DIR_CCW)
     {
