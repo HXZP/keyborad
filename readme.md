@@ -1,12 +1,12 @@
 # 星火-12%配列小键盘
 
-<img src="F:\Aproject\miniboard\mini_ctrl\doc\7.readme\pictrue\028b9a026d16685f6c7804281db934b0.jpg" alt="028b9a026d16685f6c7804281db934b0" style="zoom:50%;" />
+![image-20250806234101749](./doc/7.readme/pictrue/028b9a026d16685f6c7804281db934b0.jpg)
 
 # 为什么做这个？
 
 ​	一开始是看上了这个键盘，但是这个价格还是很难接受，自己加旋钮和键帽可能就到了200RMB，所以想了一下还是决定自己做，还有一个理由是因为看上上图那个红色旋钮，这三个旋钮加起来要35RMB
 
-![image-20250806234101749](F:\Aproject\miniboard\mini_ctrl\doc\7.readme\pictrue\image-20250806234101749.png)
+![image-20250806234101749](./doc/7.readme/pictrue/image-20250806234101749.png)
 
 # 是否支持vial？固件是否支持ota？
 
