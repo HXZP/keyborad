@@ -77,13 +77,13 @@ void key_GPIO_Init(void)
 }
 
 Key_Config key_config_default = 
-{
-  .debouncing_Time = 5,
-  
-  .down_Time = 1,
+{ /*1:1ms*/  
+  .debouncing_Time = 10,
+  /*1:100ms*/
+//  .down_Time = 1,
   .downlong_Time = 5,
-  .downhold_Time = 50,
-  .double_Time = 10, 
+  .downhold_Time = 20,
+  .double_Time = 1, 
 
 };
 

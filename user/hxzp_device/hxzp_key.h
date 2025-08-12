@@ -17,11 +17,13 @@ typedef enum
 {
   KEY_IDLE = 0,
   
-  KEY_PRESS,
+//  KEY_PRESS,
   KEY_DOWN,
   KEY_DOWN_LONG,
   KEY_DOWN_HOLD,
-  KEY_UP,
+  KEY_DOWN_UP,
+  KEY_DOWN_LONG_UP,    
+  KEY_DOWN_HOLD_UP,    
   KEY_DOUBLE,
   
 }Key_State_e; 
@@ -33,7 +35,7 @@ typedef struct hxzp_Key_Config_s{
   uint8_t  debouncing_Time;
   
   /*1:100ms*/
-  uint8_t  down_Time;
+//  uint8_t  down_Time;
   uint16_t downlong_Time;
   uint16_t downhold_Time; 
   uint8_t  double_Time;  
@@ -49,6 +51,7 @@ typedef struct hxzp_Key_s{
   Key_Config *Config;
 
   uint32_t switchTime;
+  uint32_t pressStart; 
   uint32_t clickTime;  
   struct
   {

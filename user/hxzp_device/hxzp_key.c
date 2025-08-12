@@ -1,102 +1,109 @@
-/*������ͷ��������ͷ����������*/
 
 #include "hxzp_key.h"
 
 
 static List* KeyList;
 
-void StartKeyTask(void *argument)
-{  
+void StartKeyTask(void *argument) {
   Key *self;
-  uint32_t errTime;
-  uint8_t value;
+  uint32_t currentTick;
+  uint8_t rawValue;
   
-  for(;;)
-  {
-    for(List *node = KeyList->next; node != NULL; node = node->next)
-    {
+  for(;;) {
+    currentTick = HAL_GetTick(); // 统一时间戳
+    
+    for(List *node = KeyList->next; node != NULL; node = node->next) {
       self = (Key*)(node->data);
       
-      if(self->Read == NULL)
-      {
+      // 跳过无效按键
+      if(self->Read == NULL) {
         continue;
       }
-      
-      /*��ȡ��ֵ*/
-      value = self->Read();
-      
-      /*����*/
-      if(value != self->pre_value)
-      {
-        self->pre_value = value;
-        
-        self->switchTime = HAL_GetTick();
-        
-        continue;
-      }
-      
-      errTime = HAL_GetTick() - self->switchTime;
-      if(errTime > self->Config[self->tableNum].debouncing_Time)
-      {
-        self->value = value;
-        
-        /*�¼��ж�*/
-        if(self->value == 1)
-        {
-          if(self->state == KEY_IDLE)
-          {
-            self->state = KEY_PRESS;
-          }         
-          else if(self->state == KEY_PRESS && errTime > self->Config[self->tableNum].down_Time*100)
-          {
-            self->state = KEY_DOWN;
-            
-            if(HAL_GetTick() - self->clickTime < self->Config[self->tableNum].double_Time*100)
-            {
-              self->state = KEY_DOUBLE;
-            }
-            else
-            {
-              self->clickTime = HAL_GetTick();
-            }
-            
-          }
-          else if(self->state == KEY_DOWN && errTime > self->Config[self->tableNum].downlong_Time*100)
-          {
-            self->state = KEY_DOWN_LONG;
-          }
-          else if(self->state == KEY_DOWN_LONG && errTime > self->Config[self->tableNum].downhold_Time*100)
-          {
-            self->state = KEY_DOWN_HOLD;
-          }                    
-        }
-        else if(self->value == 0)
-        {
-          if(self->state != KEY_IDLE && self->state != KEY_UP)
-          {
-            self->state = KEY_UP;
-          }
-          else if(self->state == KEY_UP)
-          {
-            self->state = KEY_IDLE;
-          }
-        }
-      }
-      
-      /*�¼�����*/
-      if(self->pre_state != self->state && self->Key_EventAction != NULL)
-      {
-        self->Key_EventAction(self->state);
-      }   
-      
-      self->pre_state = self->state;
 
+      // 1. 读取原始值并更新变化时间
+      rawValue = self->Read();
+      if(rawValue != self->pre_value) {
+        self->pre_value = rawValue;
+        self->switchTime = currentTick;
+      }
+
+      // 2. 计算稳定时间（注意单位转换）
+      uint32_t stableTime = currentTick - self->switchTime;
+      uint32_t debounceTime = self->Config[self->tableNum].debouncing_Time; // ms
+      
+      // 3. 跳过消抖期
+      if(stableTime < debounceTime) {
+        continue;
+      }
+
+      // 4. 状态机处理（修复事件丢失问题）
+      uint8_t lastState = self->state;
+      
+      if(rawValue == 1) { // 按键按下
+        switch(self->state) {
+          case KEY_IDLE:
+            // 按下后立即进入DOWN状态，不等待
+            self->state = KEY_DOWN;
+            self->pressStart = currentTick; // 记录按下时间
+            break;
+            
+          case KEY_DOWN:
+            // 检查长按条件（注意单位转换：down_Time*100 = 100ms单位）
+            if(stableTime > self->Config[self->tableNum].downlong_Time * 100) {
+              self->state = KEY_DOWN_LONG;
+            }
+            break;
+            
+          case KEY_DOWN_LONG:
+            // 检查连发条件（downhold_Time单位100ms）
+            if(stableTime > self->Config[self->tableNum].downhold_Time * 100) {
+              self->state = KEY_DOWN_HOLD;
+            }
+            break;
+            
+          // 其他状态保持不变
+          default: break;
+        }
+      } 
+      else { // 按键释放
+        switch(self->state) {
+          case KEY_DOWN:
+            self->state = KEY_DOWN_UP;
+            break;
+            
+          case KEY_DOWN_LONG:
+            self->state = KEY_DOWN_LONG_UP;
+            break;
+            
+          case KEY_DOWN_HOLD:
+            self->state = KEY_DOWN_HOLD_UP;
+            break;
+            
+          case KEY_DOWN_UP:
+          case KEY_DOWN_LONG_UP:
+          case KEY_DOWN_HOLD_UP:
+            self->state = KEY_IDLE;
+            break;
+            
+          default: break;
+        }
+      }
+
+      // 5. 修复事件丢失的关键：立即触发状态变化事件
+      if(lastState != self->state && self->Key_EventAction != NULL) {
+        self->Key_EventAction(self->state);
+        
+        // 特殊处理连发事件
+        if(self->state == KEY_DOWN_HOLD) {
+          // 重置计时器以实现周期性触发
+          self->switchTime = currentTick;
+        }
+      }
     }
     
-    osDelay(1);
+    osDelay(10); // 适当增加延时减少CPU负载
   }
 }
-
 
 
 osThreadId_t KeyTaskHandle;
