@@ -18,20 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
-#include "dma.h"
-#include "fatfs.h"
-#include "sdio.h"
-#include "spi.h"
-#include "usart.h"
-#include "usb_device.h"
+#include "can.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "board_config.h"
-#include "user_init.h"
-#include "drv_init.h"
+
 
 /* USER CODE END Includes */
 
@@ -53,12 +45,24 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t RxData[8];
+/* 重写 HAL_CAN_RxFifo0MsgPendingCallback，处理 FIFO0 的数据 */
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+    CAN_RxHeaderTypeDef RxHeader;
+    
+    // 注意：回调函数内仍需调用 GetRxMessage 来读取并释放FIFO
+    if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK)
+    {
+        // 在这里处理接收到的数据 RxData
+        // 可以通过 RxHeader.StdId 或 RxHeader.ExtId 来区分不同报文
+        // 这里就是你的业务逻辑处理位置，与之前写在ISR里一样
+    }
+}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -96,29 +100,21 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-//  MX_GPIO_Init();
-  MX_DMA_Init();
-//  MX_SPI1_Init();
-//  MX_SDIO_SD_Init();
-//  MX_FATFS_Init();
-//  MX_USART3_UART_Init();
-//  MX_USART2_UART_Init();
+  MX_GPIO_Init();
+  MX_CAN_Init();
   /* USER CODE BEGIN 2 */
-  Drv_Init();
-  User_Init();
+    CAN_TxHeaderTypeDef TxHeader;
+    uint8_t TxData[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}; // 发送的数据
+    uint32_t TxMailbox; // 用于返回使用的发送邮箱
+    
+    // 配置发送报文头
+    TxHeader.StdId = 0x123;       // 标准标识符
+    TxHeader.ExtId = 0x00;        // 扩展标识符 (标准帧时通常为0)
+    TxHeader.IDE = CAN_ID_STD;    // 使用标准帧
+    TxHeader.RTR = CAN_RTR_DATA;  // 数据帧
+    TxHeader.DLC = 8;             // 数据长度 (0-8字节)    
 
   /* USER CODE END 2 */
-
-  /* Init scheduler */
-  osKernelInitialize();
-
-  /* Call init function for freertos objects (in cmsis_os2.c) */
-  MX_FREERTOS_Init();
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -126,6 +122,14 @@ int main(void)
 
   while (1)
   {
+    // 等待有空闲的发送邮箱，然后发送
+    while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan) == 0); // 等待空闲邮箱
+    if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+    {
+        // 发送错误处理
+        Error_Handler();
+    }
+    HAL_Delay(1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -141,18 +145,16 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -168,12 +170,6 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
-  PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL_DIV1_5;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
